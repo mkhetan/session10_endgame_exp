@@ -16,105 +16,17 @@ from torch.autograd import Variable
 
 class Actor(nn.Module):
 
-    def __init__(self, action_dim, max_action):
+    def __init__(self, state_dim, action_dim, max_action):
         super(Actor, self).__init__()
-
-# Alternate CNN network if running on GPU
-#        self.pool1 = nn.MaxPool2d(2, 2)  # output_size = 40
-
-#        self.conv1 = nn.Sequential(
-#                     nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(3, 3), padding=0, bias=False),
-#                     nn.ReLU(), nn.BatchNorm2d(16)
-#                     )  # output = 38
-
-#        self.conv2 = nn.Sequential(
-#            nn.Conv2d(16, 16, kernel_size=(3, 3), padding=0, bias=False),
-#            nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 36
-
-#        self.conv3 = nn.Sequential(
-#            nn.Conv2d(16, 16, kernel_size=(3, 3), padding=0, bias=False),
-#            nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 34
-
-#        self.conv4 = nn.Sequential(
-#            nn.Conv2d(16, 16, kernel_size=(3, 3), padding=0, bias=False),
-#            nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 32
-
-#        self.conv5 = nn.Sequential(
-#            nn.Conv2d(16, 16, kernel_size=(3, 3), padding=0, bias=False),
-#            nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 30
-
-#        self.pool2 = nn.MaxPool2d(2, 2)  # output_size = 15
-
-#        self.conv6 = nn.Sequential(
-#            nn.Conv2d(16, 16, kernel_size=(3, 3), padding=0, bias=False),
-#            nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 13
-
-#        self.conv7 = nn.Sequential(
-#            nn.Conv2d(16, 16, kernel_size=(3, 3), padding=0, bias=False),
-#            nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 11
-
-#        self.conv8 = nn.Sequential(
-#            nn.Conv2d(16, 16, kernel_size=(3, 3), padding=0, bias=False),
-#            nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 9
-
-#        self.conv9 = nn.Sequential(
-#            nn.Conv2d(16, 16, kernel_size=(3, 3), padding=0, bias=False),
-#            nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 7
-
-#        self.conv10 = nn.Sequential(
-#            nn.Conv2d(16, action_dim, kernel_size=(7, 7), padding=0, bias=False),
-#            # nn.ReLU(), nn.BatchNorm2d(16)
-#        )  # output = 1
-        # the copied network
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
-        self.bn1 = nn.BatchNorm2d(16)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
-        self.bn2 = nn.BatchNorm2d(32)
-        self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
-        self.bn3 = nn.BatchNorm2d(32)
-
-        def conv2d_size_out(size, kernel_size = 5, stride = 2):
-            return (size - (kernel_size - 1) - 1) // stride  + 1
-        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(80)))
-        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(80)))
-        linear_input_size = convw * convh * 32
-        self.linear_1 = nn.Linear(linear_input_size, action_dim)
-
+        self.layer_1 = nn.Linear(state_dim, 400)
+        self.layer_2 = nn.Linear(400, 300)
+        self.layer_3 = nn.Linear(300, action_dim)
         self.max_action = max_action
 
     def forward(self, x):
-        # Alternate CNN network
-#        x = self.pool1(x)
-#        x = self.conv1(x)
-#        x = self.conv2(x)
-#        x = self.conv3(x)
-#        x = self.conv4(x)
-#        x = self.conv5(x)
-#        x = self.pool2(x)
-#        x = self.conv6(x)
-#        x = self.conv7(x)
-#        x = self.conv8(x)
-#        x = self.conv9(x)
-#        x = self.conv10(x)
-#        x = x.view(x.size(0), -1)
-#        x = self.max_action * torch.tanh(x)
-        #print(x.shape)
-        x = F.relu(self.bn1(self.conv1(x)))
-        #print(x.shape)
-        x = F.relu(self.bn2(self.conv2(x)))
-        #print(x.shape)
-        x = F.relu(self.bn3(self.conv3(x)))
-        #print(x.shape)
-        x = self.linear_1(x.view(x.size(0), -1))
-        x = self.max_action * torch.tanh(x)
+        x = F.relu(self.layer_1(x))
+        x = F.relu(self.layer_2(x))
+        x = self.max_action * torch.tanh(self.layer_3(x))
         return x
 
 
@@ -123,68 +35,28 @@ class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
         # Defining the first Critic neural network
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
-        self.bn1 = nn.BatchNorm2d(16)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
-        self.bn2 = nn.BatchNorm2d(32)
-        self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
-        self.bn3 = nn.BatchNorm2d(32)
-
-        def conv2d_size_out(size, kernel_size = 5, stride = 2):
-            return (size - (kernel_size - 1) - 1) // stride  + 1
-        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(80)))
-        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(80)))
-        linear_input_size = convw * convh * 32
-#        self.linear_1 = nn.Linear(linear_input_size, action_dim)
-
-        self.layer_1 = nn.Linear(linear_input_size + action_dim, 400)
+        self.layer_1 = nn.Linear(state_dim + action_dim, 400)
         self.layer_2 = nn.Linear(400, 300)
         self.layer_3 = nn.Linear(300, 1)
         # Defining the second Critic neural network
-
-        self.conv4 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
-        self.bn1 = nn.BatchNorm2d(16)
-        self.conv5 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
-        self.bn2 = nn.BatchNorm2d(32)
-        self.conv6 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
-        self.bn3 = nn.BatchNorm2d(32)
-
-        convw2 = conv2d_size_out(conv2d_size_out(conv2d_size_out(80)))
-        convh2 = conv2d_size_out(conv2d_size_out(conv2d_size_out(80)))
-        linear_input_size2 = convw2 * convh2 * 32
-
-        self.layer_4 = nn.Linear( linear_input_size2 + action_dim, 400)
+        self.layer_4 = nn.Linear(state_dim + action_dim, 400)
         self.layer_5 = nn.Linear(400, 300)
         self.layer_6 = nn.Linear(300, 1)
 
     def forward(self, x, u):
+        xu = torch.cat([x, u], 1)
         # Forward-Propagation on the first Critic Neural Network
-        x1 = F.relu(self.bn1(self.conv1(x)))
-        x1 = F.relu(self.bn2(self.conv2(x1)))
-        x1 = F.relu(self.bn3(self.conv3(x1)))
-        x1 = x1.view(x1.size(0), -1)
-        xu = torch.cat([x1, u], 1)
         x1 = F.relu(self.layer_1(xu))
         x1 = F.relu(self.layer_2(x1))
         x1 = self.layer_3(x1)
-
         # Forward-Propagation on the second Critic Neural Network
-        x2 = F.relu(self.bn1(self.conv1(x)))
-        x2 = F.relu(self.bn2(self.conv2(x2)))
-        x2 = F.relu(self.bn3(self.conv3(x2)))
-        x2 = x2.view(x2.size(0), -1)
-        xu = torch.cat([x2, u], 1)
         x2 = F.relu(self.layer_4(xu))
         x2 = F.relu(self.layer_5(x2))
         x2 = self.layer_6(x2)
         return x1, x2
 
     def Q1(self, x, u):
-        x1 = F.relu(self.bn1(self.conv1(x)))
-        x1 = F.relu(self.bn2(self.conv2(x1)))
-        x1 = F.relu(self.bn3(self.conv3(x1)))
-        x1 = x1.view(x1.size(0), -1)
-        xu = torch.cat([x1, u], 1)
+        xu = torch.cat([x, u], 1)
         x1 = F.relu(self.layer_1(xu))
         x1 = F.relu(self.layer_2(x1))
         x1 = self.layer_3(x1)
@@ -224,9 +96,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class TD3(object):
     
     def __init__(self, state_dim, action_dim, max_action):
-        #self.actor = Actor(state_dim, action_dim, max_action).to(device)
-        self.actor = Actor(action_dim, max_action).to(device)
-        self.actor_target = Actor(action_dim, max_action).to(device)
+        self.actor = Actor(state_dim, action_dim, max_action).to(device)
+        self.actor_target = Actor(state_dim, action_dim, max_action).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters())
         self.critic = Critic(state_dim, action_dim).to(device)
@@ -236,10 +107,7 @@ class TD3(object):
         self.max_action = max_action
 
     def select_action(self, state):
-        state = torch.Tensor(state.reshape(1,1,80,80)).to(device)
-        #state = torch.Tensor(state).to(device)
-        #print(state.shape)
-        #print(state)
+        state = torch.Tensor(state.reshape(1, -1)).to(device)
         return self.actor(state).cpu().data.numpy().flatten()
 
     def train(self, replay_buffer, iterations, batch_size=100, discount=0.99, tau=0.005, policy_noise=0.2, noise_clip=0.5, policy_freq=2):
@@ -261,11 +129,7 @@ class TD3(object):
             noise = noise.clamp(-noise_clip, noise_clip)
             next_action = (next_action + noise).clamp(-self.max_action, self.max_action)
 
-            #print("next_action_shape")
-            #print(next_action.shape)
-            #print(next_state.shape)
             # Step 7: The two Critic targets take each the couple (s’, a’) as input and return two Q-values Qt1(s’,a’) and Qt2(s’,a’) as outputs
-            #target_Q1, target_Q2 = self.critic_target(next_state.reshape(batch_size, 80*80), next_action)
             target_Q1, target_Q2 = self.critic_target(next_state, next_action)
 
             # Step 8: We keep the minimum of these two Q-values: min(Qt1, Qt2)
@@ -275,7 +139,6 @@ class TD3(object):
             target_Q = reward + ((1 - done) * discount * target_Q).detach()
 
             # Step 10: The two Critic models take each the couple (s, a) as input and return two Q-values Q1(s,a) and Q2(s,a) as outputs
-            #current_Q1, current_Q2 = self.critic(state.reshape(batch_size, 80*80), action)
             current_Q1, current_Q2 = self.critic(state, action)
 
             # Step 11: We compute the loss coming from the two Critic models: Critic Loss = MSE_Loss(Q1(s,a), Qt) + MSE_Loss(Q2(s,a), Qt)
@@ -288,7 +151,6 @@ class TD3(object):
 
             # Step 13: Once every two iterations, we update our Actor model by performing gradient ascent on the output of the first Critic model
             if it % policy_freq == 0:
-                #actor_loss = -self.critic.Q1(state.reshape(batch_size, 80*80), self.actor(state)).mean()
                 actor_loss = -self.critic.Q1(state, self.actor(state)).mean()
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()

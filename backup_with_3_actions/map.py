@@ -38,9 +38,14 @@ last_y = 0
 n_points = 0
 length = 0
 
+# Getting our AI, which we call "brain", and that contains our neural network that represents our Q-function
+#brain = Dqn(5,3,0.9)
+#torch.manual_seed(seed)
 np.random.seed(1)
 start_timesteps = 1e4 # Number of iterations/timesteps before which the model randomly chooses an action, and after which it starts to use the policy network
-eval_freq = 2e3 # How often the evaluation step is performed (after how many timesteps)
+# mayank - this is only for testing... move it back to 1e4
+#start_timesteps = 1000
+eval_freq = 5e3 # How often the evaluation step is performed (after how many timesteps)
 max_timesteps = 5e5 # Total number of iterations/timesteps
 save_models = True # Boolean checker whether or not to save the pre-trained model
 expl_noise = 0.1 # Exploration noise - STD value of exploration Gaussian noise
@@ -53,14 +58,23 @@ policy_freq = 2 # Number of iterations to wait before the policy network (Actor 
 
 state_dim = 80*80*1
 # the action is angle between -5 and +5 - just one
-action_dim = 1
-max_action = float(1)
+action_dim = 3
+max_action = float(1)  # mayank - check this...
 policy = TD3(state_dim, action_dim, max_action)
+# we may not need this as our action now directly will be a degree of movement
+# between -5 and 5
+action2rotation = [0,5,-5]
 last_reward = 0
+#scores = []
 im = CoreImage("./images/MASK1.png")
 replay_buffer = ReplayBuffer()
 
 dumpPatch = 0
+
+# mayank - let's see if we want to use it now ...
+#evaluations = [evaluate_policy(policy)]
+
+# textureMask = CoreImage(source="./kivytest/simplemask1.png")
 
 if save_models and not os.path.exists("./pytorch_models"):
     os.makedirs("./pytorch_models")
@@ -87,6 +101,7 @@ def init():
     goal_y = 622
     first_update = False
     global swap
+    print("done is set to TRUE")
     done = True
     swap = 0
     # we may not use total_timesteps
@@ -139,7 +154,48 @@ class Car(Widget):
             self.signal2 = 10.
         if self.sensor3_x>longueur-10 or self.sensor3_x<10 or self.sensor3_y>largeur-10 or self.sensor3_y<10:
             self.signal3 = 10.
+        # taking out the patch from sand
+        # clear the patch first...
+#        patch = np.ones((80, 80))
+#        # take out a patch from self.car.x - 40 or 0 to self.car.x + 40 or longueur in x axis
+#        if int(self.x) < 40:
+#            src_fromX = 0
+#            tgt_fromX = 40 - int(self.x)
+#        else:
+#            src_fromX = int(self.x) - 40
+#            tgt_fromX = 0
+#
+#        if (int(self.x) + 40) > (longueur):
+#            src_toX = (longueur)
+#            tgt_toX = 40 + (longueur - int(self.x))
+#        else:
+#            src_toX = int(self.x) + 40
+#            tgt_toX = 80
+#
+#        # take out a patch from self.car.y - 40 or 0 to self.car.y + 40 or largeur in y axis
+#        if int(self.y) < 40:
+#            src_fromY = 0
+#            tgt_fromY = 40 - int(self.y)
+#        else:
+#            src_fromY = int(self.y) - 40
+#            tgt_fromY = 0
+#
+#        if (self.y + 40) > (largeur):
+#            src_toY = largeur
+#            tgt_toY = 40 + (largeur - int(self.y))
+#        else:
+#            src_toY = int(self.y) + 40
+#            tgt_toY = 80
 
+        #if (( src_toX - src_fromX ) != (tgt_toX - tgt_fromX)):
+        #print(int(self.x),int(self.y), longueur, largeur)
+        #print(int(src_fromX),int(src_toX), int(src_fromY),int(src_toY))
+        #if (( src_toY - src_fromY ) != (tgt_toY - tgt_fromY)):
+        #print(int(tgt_fromX),int(tgt_toX), int(tgt_fromY),int(tgt_toY))
+
+        #print(sand[int(src_fromX):int(src_toX), int(src_fromY):int(src_toY)])
+#        patch[int(tgt_fromX):int(tgt_toX), int(tgt_fromY):int(tgt_toY)] = sand[int(src_fromX):int(src_toX), int(src_fromY):int(src_toY)]
+        #print(patch)
         # add goal information here...
         # draw a line from car's x and y location to goal location
 #        xdist = goal_x - self.x
@@ -169,6 +225,7 @@ class Car(Widget):
 #                    ycord = ycord - 1
 #                xcord = xcord + int((xdist/ydist)*(ycord - 40))
 #
+
 
 
 #        if dumpPatch > 0:
@@ -235,6 +292,7 @@ class Game(Widget):
                 print("Total Timesteps: {} Episode Num: {} Reward: {}".format(total_timesteps, episode_num, episode_reward))
                 policy.train(replay_buffer, episode_timesteps, batch_size, discount, tau, policy_noise, noise_clip, policy_freq)
 
+            # Skipping the evaluation and policy saving for now
             # environment can be reset at this point. We will see if we need such thing
             # We evaluate the episode and we save the policy
             if timesteps_since_eval >= eval_freq:
@@ -252,6 +310,8 @@ class Game(Widget):
             #patchimg.save(patch_name)
 
             obs = patch.reshape((1, 80, 80))
+            #obs = patch
+            #obs = torch.Tensor(obsTemp).float().unsqueeze(0)
             done = False
 
             # Set rewards and episode timesteps to zero
@@ -266,20 +326,24 @@ class Game(Widget):
         #patchimg.save(patch_name)
         # Before 10000 timesteps, we play random actions
         if total_timesteps < start_timesteps:
-            action = np.random.uniform(-1, 1, 1)
+            # mayank - randomly generates values between -1 and 1
+            #action = np.random.uniform(-1, 1, 1)
+            action = np.random.uniform(-1, 1, 3)
         else:
+            #action = policy.select_action(np.array(obs))
+            #print(obs)
             action = policy.select_action(obs)
             # If the explore_noise parameter is not 0, we add noise to the action and we clip it
             if expl_noise != 0:
-                action = (action + np.random.normal(0, expl_noise, 1)).clip( -1, 1)
+                action = (action + np.random.normal(0, expl_noise, 3)).clip( -1, 1)
             print("printing action")
             print(action)
 
         # Apply this action and move the car to the new location as a result of that.
         # The agent performs the action in the environment, then reaches the next state and receives the reward
-        rotation = int(round(action[0]*5))
+        #rotation = int(round(action[0]*5))
 
-        #rotation = action2rotation[np.argmax(action)]
+        rotation = action2rotation[np.argmax(action)]
 
         print("rotation is")
         print(rotation)
@@ -326,7 +390,7 @@ class Game(Widget):
                 goal_x = 9
                 goal_y = 85
                 swap = 1
-            # setting done to true if distance < 25
+            # mayank - setting done to true if distance < 25
             #done = True
 
         last_distance = distance
@@ -375,6 +439,7 @@ class Game(Widget):
         #patchimg.save(patch_name)
 
         new_obs = patch.reshape((1, 80, 80))
+        #new_obs = patch
         reward = last_reward
         # We check if the episode is done
         #done_bool = 0 if episode_timesteps + 1 == 1000 else float(done)

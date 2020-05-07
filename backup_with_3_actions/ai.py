@@ -19,7 +19,6 @@ class Actor(nn.Module):
     def __init__(self, action_dim, max_action):
         super(Actor, self).__init__()
 
-# Alternate CNN network if running on GPU
 #        self.pool1 = nn.MaxPool2d(2, 2)  # output_size = 40
 
 #        self.conv1 = nn.Sequential(
@@ -88,10 +87,12 @@ class Actor(nn.Module):
         linear_input_size = convw * convh * 32
         self.linear_1 = nn.Linear(linear_input_size, action_dim)
 
+        #self.layer_1 = nn.Linear(state_dim, 400)
+        #self.layer_2 = nn.Linear(400, 300)
+        #self.layer_3 = nn.Linear(300, action_dim)
         self.max_action = max_action
 
     def forward(self, x):
-        # Alternate CNN network
 #        x = self.pool1(x)
 #        x = self.conv1(x)
 #        x = self.conv2(x)
@@ -265,6 +266,7 @@ class TD3(object):
             #print(next_action.shape)
             #print(next_state.shape)
             # Step 7: The two Critic targets take each the couple (s’, a’) as input and return two Q-values Qt1(s’,a’) and Qt2(s’,a’) as outputs
+            #target_Q1, target_Q2 = self.critic_target(next_state.reshape(batch_size, 80*80), next_action.reshape(batch_size, 1))
             #target_Q1, target_Q2 = self.critic_target(next_state.reshape(batch_size, 80*80), next_action)
             target_Q1, target_Q2 = self.critic_target(next_state, next_action)
 
@@ -275,6 +277,8 @@ class TD3(object):
             target_Q = reward + ((1 - done) * discount * target_Q).detach()
 
             # Step 10: The two Critic models take each the couple (s, a) as input and return two Q-values Q1(s,a) and Q2(s,a) as outputs
+            #current_Q1, current_Q2 = self.critic(state, action)
+            #current_Q1, current_Q2 = self.critic(state.reshape(batch_size, 80*80), action.reshape(batch_size, 1))
             #current_Q1, current_Q2 = self.critic(state.reshape(batch_size, 80*80), action)
             current_Q1, current_Q2 = self.critic(state, action)
 
@@ -288,6 +292,7 @@ class TD3(object):
 
             # Step 13: Once every two iterations, we update our Actor model by performing gradient ascent on the output of the first Critic model
             if it % policy_freq == 0:
+                #actor_loss = -self.critic.Q1(state.reshape(batch_size, 80*80), self.actor(state).reshape(batch_size,1)).mean()
                 #actor_loss = -self.critic.Q1(state.reshape(batch_size, 80*80), self.actor(state)).mean()
                 actor_loss = -self.critic.Q1(state, self.actor(state)).mean()
                 self.actor_optimizer.zero_grad()
