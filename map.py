@@ -335,7 +335,7 @@ class Game(Widget):
             action = policy.select_action(obs)
             # If the explore_noise parameter is not 0, we add noise to the action and we clip it
             if expl_noise != 0:
-                action = (action + np.random.normal(0, expl_noise, size=None)).clip( -1, 1)
+                action = (action + np.random.normal(0, expl_noise, 3)).clip( -1, 1)
             print("printing action")
             print(action)
 
