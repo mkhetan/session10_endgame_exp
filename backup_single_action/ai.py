@@ -184,7 +184,7 @@ class Critic(nn.Module):
         x1 = F.relu(self.bn1(self.conv1(x)))
         x1 = F.relu(self.bn2(self.conv2(x1)))
         x1 = F.relu(self.bn3(self.conv3(x1)))
-        x1 = x1.view(x1.size(0), -1)
+        x1 = x1.view(x.size(0), -1)
         xu = torch.cat([x1, u], 1)
         x1 = F.relu(self.layer_1(xu))
         x1 = F.relu(self.layer_2(x1))

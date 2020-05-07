@@ -58,12 +58,12 @@ policy_freq = 2 # Number of iterations to wait before the policy network (Actor 
 
 state_dim = 80*80*1
 # the action is angle between -5 and +5 - just one
-action_dim = 3
+action_dim = 1
 max_action = float(1)  # mayank - check this...
 policy = TD3(state_dim, action_dim, max_action)
 # we may not need this as our action now directly will be a degree of movement
 # between -5 and 5
-action2rotation = [0,5,-5]
+#action2rotation = [0,5,-5]
 last_reward = 0
 #scores = []
 im = CoreImage("./images/MASK1.png")
@@ -324,11 +324,11 @@ class Game(Widget):
         #patchimg = PILImage.fromarray(patch.astype("uint8")*255)
         #patch_name = "./images/" + "patch_" + str(int(self.car.x)) + "_" + str(int(self.car.y)) + ".jpg"
         #patchimg.save(patch_name)
+        #network_action = False
         # Before 10000 timesteps, we play random actions
         if total_timesteps < start_timesteps:
             # mayank - randomly generates values between -1 and 1
-            #action = np.random.uniform(-1, 1, 1)
-            action = np.random.uniform(-1, 1, 3)
+            action = np.random.uniform(-1, 1, 1)
         else:
             #action = policy.select_action(np.array(obs))
             #print(obs)
@@ -338,13 +338,12 @@ class Game(Widget):
                 action = (action + np.random.normal(0, expl_noise, size=None)).clip( -1, 1)
             print("printing action")
             print(action)
+            #network_action = True
 
         # Apply this action and move the car to the new location as a result of that.
         # The agent performs the action in the environment, then reaches the next state and receives the reward
-        #rotation = int(round(action[0]*5))
-
-        rotation = action2rotation[np.argmax(action)]
-
+        rotation = int(round(action[0]*5))
+        #if network_action:
         print("rotation is")
         print(rotation)
         self.car.move(rotation)
