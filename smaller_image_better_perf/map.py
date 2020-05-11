@@ -40,8 +40,8 @@ n_points = 0
 length = 0
 
 np.random.seed(0)
-#start_timesteps = 1e4 # Number of iterations/timesteps before which the model randomly chooses an action, and after which it starts to use the policy network
-start_timesteps = 100
+start_timesteps = 1e4 # Number of iterations/timesteps before which the model randomly chooses an action, and after which it starts to use the policy network
+#start_timesteps = 100
 eval_freq = 2e3 # How often the evaluation step is performed (after how many timesteps)
 max_timesteps = 5e5 # Total number of iterations/timesteps
 save_models = True # Boolean checker whether or not to save the pre-trained model
@@ -95,7 +95,7 @@ def init():
     total_timesteps = 0
     timesteps_since_eval = 0
     episode_num = 0
-    policy.load(file_name, directory="./pytorch_models")
+    #policy.load(file_name, directory="./pytorch_models")
 
 # Initializing the last distance
 last_distance = 0
